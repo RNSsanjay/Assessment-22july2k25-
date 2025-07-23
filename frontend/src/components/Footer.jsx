@@ -19,15 +19,15 @@ const Footer = () => {
 
   return (
     <footer className="bg-[#1F1D4F] text-white py-12 px-6 md:px-12 font-inter">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto flex flex-col items-center"> {/* Centered content */}
         {/* Top Section: Logo and Subscription */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-10 space-y-8 md:space-y-0">
-          <div className="text-4xl font-bold text-white">Event <span className="text-[#8A2BE2]">Hive</span></div>
-          <form className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full md:w-auto" onSubmit={handleSubscribe}>
+        <div className="flex flex-col items-center mb-10 space-y-8 w-full"> {/* Centered and full width */}
+          <div className="text-4xl font-bold text-white mb-6">Event <span className="text-[#8A2BE2]">Hive</span></div> {/* Adjusted margin */}
+          <form className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full justify-center" onSubmit={handleSubscribe}> {/* Centered form */}
             <input
               type="email"
               placeholder="Enter your mail"
-              className="p-3 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] w-full sm:w-64"
+              className="p-3 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] w-full sm:w-80" // Increased width for input
               value={email}
               onChange={(e) => { setEmail(e.target.value); setMessage(''); }}
               required
@@ -43,7 +43,7 @@ const Footer = () => {
         {message && <p className="text-center text-sm mb-4">{message}</p>}
 
         {/* Middle Section: Navigation Links */}
-        <nav className="flex flex-wrap justify-center md:justify-center gap-x-8 gap-y-4 mb-10 text-lg font-medium">
+        <nav className="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-10 text-lg font-medium"> {/* Already centered */}
           <a href="#" className="hover:text-[#8A2BE2] transition-colors duration-200">Home</a>
           <a href="#" className="hover:text-[#8A2BE2] transition-colors duration-200">About</a>
           <a href="#" className="hover:text-[#8A2BE2] transition-colors duration-200">Services</a>
@@ -52,10 +52,10 @@ const Footer = () => {
         </nav>
 
         {/* Separator Line */}
-        <hr className="border-t border-gray-700 mb-8" />
+        <hr className="border-t border-gray-700 w-full mb-8" /> {/* Full width line */}
 
         {/* Bottom Section: Language, Social, Copyright */}
-        <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
+        <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0 w-full"> {/* Full width */}
           {/* Language Selector */}
           <div className="flex space-x-2">
             <button className="bg-[#8A2BE2] text-white text-sm py-2 px-4 rounded-lg">English</button>
