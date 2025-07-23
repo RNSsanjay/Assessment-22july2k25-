@@ -1,72 +1,72 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Footer from '../../components/Footer';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+
+  // Logout handler
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/');
+  };
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Fetch events from backend
   const fetchEvents = async (pageNum = 1, append = false) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/events/?page=${pageNum}&limit=9`);
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        console.error('No admin token found');
+        setLoading(false);
+        setLoadingMore(false);
+        return;
+      }
+
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/events/?page=${pageNum}&limit=9`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
-      
+
       if (response.ok) {
         if (append) {
           setEvents(prevEvents => [...prevEvents, ...data.events]);
         } else {
           setEvents(data.events);
         }
-        setHasMore(data.pagination.has_more);
+        setHasMore(data.pagination ? data.pagination.has_more : false);
       } else {
         console.error('Failed to fetch events:', data.error);
-        // Fallback to dummy data if API fails
         if (!append) {
           setEvents([
             {
-              id: 1,
+              id: '1',
               image: 'https://placehold.co/400x250/2C2B6A/FFFFFF?text=Event+1',
               type: 'PAID',
-              title: 'BestSeller Book Bootcamp -write, Market & Publish Your Book -Lucknow',
-              date: 'Saturday, March 18, 9.30PM',
+              title: 'BestSeller Book Bootcamp - Write, Market & Publish Your Book - Lucknow',
+              date: 'Saturday, March 18, 9:30PM',
               location: 'ONLINE EVENT - Attend anywhere',
             },
-            {
-              id: 2,
-              image: 'https://placehold.co/400x250/8A2BE2/FFFFFF?text=Event+2',
-              type: 'FREE',
-              title: 'BestSeller Book Bootcamp -write, Market & Publish Your Book -Lucknow',
-              date: 'Saturday, March 18, 9.30PM',
-              location: 'ONLINE EVENT - Attend anywhere',
-            },
-            {
-              id: 3,
-              image: 'https://placehold.co/400x250/2C2B6A/FFFFFF?text=Event+3',
-              type: 'PAID',
-              title: 'BestSeller Book Bootcamp -write, Market & Publish Your Book -Lucknow',
-              date: 'Saturday, March 18, 9.30PM',
-              location: 'ONLINE EVENT - Attend anywhere',
-            }
           ]);
         }
       }
     } catch (error) {
       console.error('Error fetching events:', error);
-      // Fallback to dummy data on network error
       if (!append) {
         setEvents([
           {
-            id: 1,
+            id: '1',
             image: 'https://placehold.co/400x250/2C2B6A/FFFFFF?text=Event+1',
             type: 'PAID',
-            title: 'BestSeller Book Bootcamp -write, Market & Publish Your Book -Lucknow',
-            date: 'Saturday, March 18, 9.30PM',
+            title: 'BestSeller Book Bootcamp - Write, Market & Publish Your Book - Lucknow',
+            date: 'Saturday, March 18, 9:30PM',
             location: 'ONLINE EVENT - Attend anywhere',
-          }
+          },
         ]);
       }
     } finally {
@@ -81,7 +81,7 @@ const AdminDashboard = () => {
 
   const handleLoadMore = async () => {
     if (!hasMore || loadingMore) return;
-    
+
     setLoadingMore(true);
     const nextPage = page + 1;
     setPage(nextPage);
@@ -90,21 +90,35 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 font-inter text-[#2C2C2C]">
-      {/* Header Section */}
+      {/* Navbar */}
       <header className="bg-white shadow-sm py-4 px-6 md:px-12 flex justify-between items-center">
-        <div className="text-2xl font-bold text-[#1F1D4F]">Event <span className="text-[#8A2BE2]">Hive</span></div>
-        <button
-          className="bg-[#8A2BE2] text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-[#7a1bd1] transition-all duration-300 text-lg focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:ring-offset-2"
-          onClick={() => navigate('/admin/create-event')}
-        >
-          + Create Event
-        </button>
+        <div className="text-2xl font-bold text-[#1F1D4F]">
+          Event <span className="text-[#8A2BE2]">Hive</span>
+        </div>
+        <nav className="flex gap-6">
+          <button
+            className="text-[#2C2C2C] font-semibold hover:text-[#8A2BE2] transition-all duration-200"
+            onClick={() => navigate('/admin/dashboard')}
+          >
+            Dashboard
+          </button>
+          <button
+            className="text-[#2C2C2C] font-semibold hover:text-[#8A2BE2] transition-all duration-200"
+            onClick={() => navigate('/admin/create-event')}
+          >
+            Create Event
+          </button>
+          <button
+            className="text-[#2C2C2C] font-semibold hover:text-red-600 transition-all duration-200 border-l pl-6 ml-6"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </nav>
       </header>
 
       {/* Hero Section */}
-      <section
-        className="relative text-white py-16 px-6 md:px-12 overflow-hidden ml-35 mr-25 mt-10 rounded-[10px]"
-      >
+      <section className="relative text-white py-16 px-6 md:px-12 overflow-hidden mx-4 md:mx-25 mt-10 rounded-[10px]">
         <img
           src="/src/assets/discoverbg.svg"
           alt="Discover Background"
@@ -136,44 +150,48 @@ const AdminDashboard = () => {
           </div>
         </div>
       </section>
-          
 
       {/* Listed Events Section */}
       <section className="py-12 px-6 md:px-12 bg-gray-100">
         <div className="max-w-6xl mx-auto">
           <h3 className="text-3xl font-extrabold text-[#2C2C2C] mb-8">Listed Events</h3>
 
-          {/* Loading State */}
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#6B47DC]"></div>
             </div>
           ) : (
             <>
-              {/* Events Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {events.map((event) => (
-                  <div key={event.id} className="bg-[#F7F7F7] rounded-xl shadow-sm overflow-hidden transform hover:scale-105 transition-transform duration-300">
-                    <div className="relative">
-                      <img
-                        src={event.image && event.image.startsWith('data:image') ? event.image : (event.image || 'https://placehold.co/400x250/2C2B6A/FFFFFF?text=Event')}
-                        alt={event.title}
-                        className="w-full h-48 object-cover rounded-t-xl"
-                      />
-                      <span className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold bg-[#8A2BE2] text-white`}>
-                        {event.type}
-                      </span>
+                {events.map((event) => {
+                  const imgSrc = event.image && typeof event.image === 'string' && event.image.startsWith('data:image')
+                    ? event.image
+                    : event.image_url || 'https://placehold.co/400x250/2C2B6A/FFFFFF?text=Event';
+                  const title = event.title || 'Untitled Event';
+                  const date = event.date || '';
+                  const location = event.location || '';
+                  return (
+                    <div key={event.id} className="bg-[#F7F7F7] rounded-xl shadow-sm overflow-hidden transform hover:scale-105 transition-transform duration-300">
+                      <div className="relative">
+                        <img
+                          src={imgSrc}
+                          alt={title}
+                          className="w-full h-48 object-cover rounded-t-xl"
+                        />
+                        <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold bg-[#8A2BE2] text-white">
+                          {event.type}
+                        </span>
+                      </div>
+                      <div className="p-5">
+                        <h4 className="text-xl font-bold text-[#2C2C2C] mb-2 leading-tight">{title}</h4>
+                        <p className="text-sm text-[#8A2BE2] mb-1">{date}</p>
+                        <p className="text-sm text-gray-600 mb-4">{location}</p>
+                      </div>
                     </div>
-                    <div className="p-5">
-                      <h4 className="text-xl font-bold text-[#2C2C2C] mb-2 leading-tight">{event.title}</h4>
-                      <p className="text-sm text-[#8A2BE2] mb-1">{event.date}</p>
-                      <p className="text-sm text-gray-600 mb-4">{event.location}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
-              {/* Load More Button */}
               {hasMore && (
                 <div className="text-center mt-12">
                   <button
@@ -195,7 +213,9 @@ const AdminDashboard = () => {
             </>
           )}
         </div>
+         
       </section>
+       <Footer />
     </div>
   );
 };

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Footer from '../../components/Footer';
 
 const CreateEvent = () => {
   const navigate = useNavigate();
-  // State for form fields
   const [eventTitle, setEventTitle] = useState('');
   const [eventVenue, setEventVenue] = useState('');
   const [startTime, setStartTime] = useState('');
@@ -11,10 +11,10 @@ const CreateEvent = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [eventCost, setEventCost] = useState('');
-  const [eventImage, setEventImage] = useState(null); // For file input
+  const [eventType, setEventType] = useState('FREE');
+  const [eventImage, setEventImage] = useState(null);
   const [eventDescription, setEventDescription] = useState('');
-
-  // State for individual field errors
+  const [isGenerating, setIsGenerating] = useState(false);
   const [eventTitleError, setEventTitleError] = useState('');
   const [eventVenueError, setEventVenueError] = useState('');
   const [startTimeError, setStartTimeError] = useState('');
@@ -24,19 +24,16 @@ const CreateEvent = () => {
   const [eventCostError, setEventCostError] = useState('');
   const [eventDescriptionError, setEventDescriptionError] = useState('');
   const [eventImageError, setEventImageError] = useState('');
-
-
-  // State for general form messages/loading
   const [formMessage, setFormMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Convert image file to base64 and store in state
+  // Convert image file to base64
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onloadend = () => {
-        setEventImage(reader.result); // base64 string
+        setEventImage(reader.result);
         setEventImageError('');
       };
       reader.readAsDataURL(file);
@@ -45,10 +42,53 @@ const CreateEvent = () => {
     }
   };
 
+  // Generate description using Gemini API
+  const generateDescription = async () => {
+    if (!eventTitle.trim() || !eventVenue.trim()) {
+      setFormMessage('Please provide event title and venue to generate description.');
+      return;
+    }
+    setIsGenerating(true);
+    setFormMessage('');
+
+    try {
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyDrXQHPIsXtE-hu4xdHQPXOoc_ypKVvAhA', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `Generate a concise and engaging event description (100-150 words) for an event titled "${eventTitle}" held at "${eventVenue}". The event is ${eventType.toLowerCase()}. Include details that make the event appealing and highlight its unique aspects.`
+                }
+              ]
+            }
+          ]
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok && data.candidates && data.candidates[0].content) {
+        const generatedText = data.candidates[0].content.parts[0].text;
+        setEventDescription(generatedText);
+        setEventDescriptionError('');
+      } else {
+        setFormMessage('Failed to generate description. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error generating description:', error);
+      setFormMessage('Failed to connect to AI service. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const validateForm = () => {
     let isValid = true;
 
-    // Reset all errors
     setEventTitleError('');
     setEventVenueError('');
     setStartTimeError('');
@@ -83,23 +123,39 @@ const CreateEvent = () => {
     if (!endDate) {
       setEndDateError('End date is required.');
       isValid = false;
-    } else if (new Date(endDate) < new Date(startDate)) {
-        setEndDateError('End date cannot be before start date.');
-        isValid = false;
     }
-    if (!eventCost.toString().trim()) { // Convert to string to handle 0 correctly
-      setEventCostError('Event cost is required.');
-      isValid = false;
-    } else if (isNaN(parseFloat(eventCost)) || parseFloat(eventCost) < 0) {
-        setEventCostError('Event cost must be a non-negative number.');
+    if (eventType === 'PAID') {
+      if (!eventCost.toString().trim()) {
+        setEventCostError('Event cost is required for paid events.');
         isValid = false;
+      } else if (isNaN(parseFloat(eventCost)) || parseFloat(eventCost) <= 0) {
+        setEventCostError('Event cost must be a positive number for paid events.');
+        isValid = false;
+      }
+    } else {
+      // FREE event, cost is not required and not sent
+      setEventCost('');
+      setEventCostError('');
+    }
+    if (!eventDescription.trim()) {
+      setEventDescriptionError('Event description is required.');
+      isValid = false;
     }
     if (!eventImage) {
       setEventImageError('Event image is required.');
       isValid = false;
     }
-    if (!eventDescription.trim()) {
-      setEventDescriptionError('Event description is required.');
+
+    // Validate date and time
+    try {
+      const startDateTime = new Date(`${startDate}T${startTime}`);
+      const endDateTime = new Date(`${endDate}T${endTime}`);
+      if (endDateTime <= startDateTime) {
+        setEndDateError('End date and time must be after start date and time.');
+        isValid = false;
+      }
+    } catch {
+      setFormMessage('Invalid date or time format.');
       isValid = false;
     }
 
@@ -117,7 +173,6 @@ const CreateEvent = () => {
     }
 
     try {
-      // Get token from localStorage
       const token = localStorage.getItem('adminToken');
       if (!token) {
         setFormMessage('Please login to create events.');
@@ -125,7 +180,6 @@ const CreateEvent = () => {
         return;
       }
 
-      // Prepare form data
       const eventData = {
         eventTitle: eventTitle.trim(),
         eventVenue: eventVenue.trim(),
@@ -133,10 +187,13 @@ const CreateEvent = () => {
         endTime,
         startDate,
         endDate,
-        eventCost: parseFloat(eventCost),
         eventDescription: eventDescription.trim(),
-        eventImage: eventImage // base64 string
+        eventImage,
+        type: eventType,
       };
+      if (eventType === 'PAID') {
+        eventData.eventCost = parseFloat(eventCost);
+      }
 
       const response = await fetch('http://127.0.0.1:8000/api/events/create/', {
         method: 'POST',
@@ -145,16 +202,12 @@ const CreateEvent = () => {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(eventData),
-        credentials: 'include',
       });
 
       const data = await response.json();
 
       if (response.ok) {
         setFormMessage('Event created successfully!');
-        console.log('Event created:', data);
-
-        // Clear form fields after successful submission
         setEventTitle('');
         setEventVenue('');
         setStartTime('');
@@ -164,15 +217,13 @@ const CreateEvent = () => {
         setEventCost('');
         setEventImage(null);
         setEventDescription('');
-
-        // Navigate to dashboard after a short delay
+        setEventType('FREE');
         setTimeout(() => {
           navigate('/admin/dashboard');
         }, 1200);
       } else {
         setFormMessage(data.error || 'Failed to create event. Please try again.');
       }
-
     } catch (error) {
       setFormMessage('Failed to create event. Could not connect to the server.');
       console.error('Create event error:', error);
@@ -182,9 +233,30 @@ const CreateEvent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f5f5f7] to-[#e0d7f7] flex items-center justify-center p-4 font-inter">
+    <div className="min-h-screen bg-gradient-to-br from-[#f5f5f7] to-[#e0d7f7] font-inter">
+      {/* Navbar (copied from AdminDashboard) */}
+      <header className="bg-white shadow-sm py-4 px-6 md:px-12 flex justify-between items-center">
+        <div className="text-2xl font-bold text-[#1F1D4F]">
+          Event <span className="text-[#8A2BE2]">Hive</span>
+        </div>
+        <nav className="flex gap-6">
+          <button
+            className="text-[#2C2C2C] font-semibold hover:text-[#8A2BE2] transition-all duration-200"
+            onClick={() => navigate('/admin/dashboard')}
+          >
+            Dashboard
+          </button>
+          <button
+            className="text-[#2C2C2C] font-semibold hover:text-[#8A2BE2] transition-all duration-200"
+            onClick={() => navigate('/admin/create-event')}
+          >
+            Create Event
+          </button>
+        </nav>
+      </header>
+      {/* End Navbar */}
+      <div className="flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-16 w-full max-w-3xl relative">
-        {/* Back Button */}
         <button
           type="button"
           className="absolute top-6 left-6 flex items-center gap-2 text-[#8A2BE2] font-bold text-lg hover:underline hover:text-[#6a1bb1] transition-all duration-200"
@@ -198,7 +270,6 @@ const CreateEvent = () => {
         <h2 className="text-4xl font-extrabold text-[#2C2C2C] text-center mb-12 tracking-tight">Create Event</h2>
 
         <form className="space-y-8" onSubmit={handleSubmit}>
-          {/* Event Title */}
           <div>
             <label htmlFor="event-title" className="block text-gray-700 text-base font-bold mb-2">Event Title</label>
             <input
@@ -213,7 +284,6 @@ const CreateEvent = () => {
             {eventTitleError && <p className="text-red-500 text-sm mt-1 font-semibold">{eventTitleError}</p>}
           </div>
 
-          {/* Event Venue */}
           <div>
             <label htmlFor="event-venue" className="block text-gray-700 text-base font-bold mb-2">Event Venue</label>
             <input
@@ -228,7 +298,6 @@ const CreateEvent = () => {
             {eventVenueError && <p className="text-red-500 text-sm mt-1 font-semibold">{eventVenueError}</p>}
           </div>
 
-          {/* Start Time & End Time */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <label htmlFor="start-time" className="block text-gray-700 text-base font-bold mb-2">Start Time</label>
@@ -236,7 +305,6 @@ const CreateEvent = () => {
                 type="time"
                 id="start-time"
                 className={`w-full p-4 border ${startTimeError ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] text-gray-800 placeholder-gray-400 font-semibold text-lg`}
-                placeholder="Enter start time"
                 value={startTime}
                 onChange={(e) => { setStartTime(e.target.value); setStartTimeError(''); }}
                 required
@@ -249,7 +317,6 @@ const CreateEvent = () => {
                 type="time"
                 id="end-time"
                 className={`w-full p-4 border ${endTimeError ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] text-gray-800 placeholder-gray-400 font-semibold text-lg`}
-                placeholder="Enter end time"
                 value={endTime}
                 onChange={(e) => { setEndTime(e.target.value); setEndTimeError(''); }}
                 required
@@ -258,7 +325,6 @@ const CreateEvent = () => {
             </div>
           </div>
 
-          {/* Start Date & End Date */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <label htmlFor="start-date" className="block text-gray-700 text-base font-bold mb-2">Start Date</label>
@@ -266,7 +332,6 @@ const CreateEvent = () => {
                 type="date"
                 id="start-date"
                 className={`w-full p-4 border ${startDateError ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] text-gray-800 placeholder-gray-400 font-semibold text-lg`}
-                placeholder="Enter start date"
                 value={startDate}
                 onChange={(e) => { setStartDate(e.target.value); setStartDateError(''); setEndDateError(''); }}
                 required
@@ -279,7 +344,6 @@ const CreateEvent = () => {
                 type="date"
                 id="end-date"
                 className={`w-full p-4 border ${endDateError ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] text-gray-800 placeholder-gray-400 font-semibold text-lg`}
-                placeholder="Enter end date"
                 value={endDate}
                 onChange={(e) => { setEndDate(e.target.value); setEndDateError(''); }}
                 required
@@ -288,7 +352,41 @@ const CreateEvent = () => {
             </div>
           </div>
 
-          {/* Event Cost */}
+          <div>
+            <label className="block text-gray-700 text-base font-bold mb-2">Event Type</label>
+            <div className="flex gap-6">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="event-type"
+                  value="FREE"
+                  checked={eventType === 'FREE'}
+                  onChange={(e) => {
+                    setEventType(e.target.value);
+                    setEventCost('0');
+                    setEventCostError('');
+                  }}
+                  className="mr-2"
+                />
+                Free
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="event-type"
+                  value="PAID"
+                  checked={eventType === 'PAID'}
+                  onChange={(e) => {
+                    setEventType(e.target.value);
+                    setEventCost('');
+                  }}
+                  className="mr-2"
+                />
+                Paid
+              </label>
+            </div>
+          </div>
+
           <div>
             <label htmlFor="event-cost" className="block text-gray-700 text-base font-bold mb-2">Event Cost</label>
             <input
@@ -298,15 +396,12 @@ const CreateEvent = () => {
               placeholder="Enter the cost of the event in INR"
               value={eventCost}
               onChange={(e) => { setEventCost(e.target.value); setEventCostError(''); }}
+              disabled={eventType === 'FREE'}
               required
             />
             {eventCostError && <p className="text-red-500 text-sm mt-1 font-semibold">{eventCostError}</p>}
           </div>
 
-          {/* Event Description Section Header */}
-          <h3 className="text-2xl font-extrabold text-[#2C2C2C] text-center mt-10 mb-8 tracking-tight">Event Description</h3>
-
-          {/* Event Image Upload */}
           <div>
             <label htmlFor="event-image" className="block text-gray-700 text-base font-bold mb-2">Event Image</label>
             <div className={`flex flex-col items-center justify-center h-56 border-2 ${eventImageError ? 'border-red-500' : 'border-dashed border-gray-300'} rounded-2xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors duration-200`}>
@@ -333,14 +428,30 @@ const CreateEvent = () => {
             {eventImageError && <p className="text-red-500 text-sm mt-1 font-semibold">{eventImageError}</p>}
           </div>
 
-          {/* Event Description Textarea */}
           <div>
-            <label htmlFor="event-description" className="block text-gray-700 text-base font-bold mb-2">Event Description</label>
+            <div className="flex justify-between items-center mb-2">
+              <label htmlFor="event-description" className="block text-gray-700 text-base font-bold">Event Description</label>
+              <button
+                type="button"
+                onClick={generateDescription}
+                className="bg-[#8A2BE2] text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-[#7a1bd1] transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isGenerating}
+              >
+                {isGenerating ? (
+                  <span className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Generating...
+                  </span>
+                ) : (
+                  'Generate with AI'
+                )}
+              </button>
+            </div>
             <textarea
               id="event-description"
               rows="6"
               className={`w-full p-4 border ${eventDescriptionError ? 'border-red-500' : 'border-gray-300'} rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] text-gray-800 placeholder-gray-400 resize-y font-semibold text-lg`}
-              placeholder="Type here..."
+              placeholder="Type here or use AI to generate..."
               value={eventDescription}
               onChange={(e) => { setEventDescription(e.target.value); setEventDescriptionError(''); }}
               required
@@ -348,14 +459,12 @@ const CreateEvent = () => {
             {eventDescriptionError && <p className="text-red-500 text-sm mt-1 font-semibold">{eventDescriptionError}</p>}
           </div>
 
-          {/* Form Message */}
           {formMessage && (
             <p className={`text-center text-base font-bold ${formMessage.includes('successful') ? 'text-green-600' : 'text-red-600'}`}>
               {formMessage}
             </p>
           )}
 
-          {/* Create Event Button */}
           <button
             type="submit"
             className="w-full bg-[#320ed4] text-white font-extrabold py-4 px-8 rounded-2xl shadow-lg hover:bg-[#7a1bd1] transform hover:-translate-y-1 transition-all duration-300 text-2xl flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed tracking-wide"
@@ -372,6 +481,9 @@ const CreateEvent = () => {
           </button>
         </form>
       </div>
+    
+    </div>
+      <Footer />
     </div>
   );
 };
