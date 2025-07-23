@@ -28,6 +28,13 @@ const UserDashboard = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  
+  // Registration modal states
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+  const [selectedEventForRegistration, setSelectedEventForRegistration] = useState(null);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [registering, setRegistering] = useState(false);
+  const [registrationMessage, setRegistrationMessage] = useState('');
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -143,6 +150,68 @@ const UserDashboard = () => {
     setFilteredEvents(filtered);
   };
 
+  // Registration functions
+  const handleEventRegistration = (event) => {
+    setSelectedEventForRegistration(event);
+    setShowRegistrationModal(true);
+    setRegistrationMessage('');
+    setPhoneNumber('');
+  };
+
+  const handleRegistrationSubmit = async () => {
+    if (!phoneNumber.trim()) {
+      setRegistrationMessage('Phone number is required');
+      return;
+    }
+
+    setRegistering(true);
+    try {
+      // Try different token keys that might be stored
+      const token = localStorage.getItem('token') || localStorage.getItem('userToken');
+      if (!token) {
+        setRegistrationMessage('Please login to register for events');
+        return;
+      }
+
+      const registrationData = {
+        phone_number: phoneNumber,
+        payment_status: selectedEventForRegistration.type === 'FREE' ? 'completed' : 'pending',
+        payment_method: selectedEventForRegistration.type === 'FREE' ? 'none' : 'gpay'
+      };
+
+      const response = await fetch(`http://127.0.0.1:8000/api/events/${selectedEventForRegistration.id}/register/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(registrationData),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setRegistrationMessage('Successfully registered for the event!');
+        setTimeout(() => {
+          setShowRegistrationModal(false);
+        }, 2000);
+      } else {
+        setRegistrationMessage(data.error || 'Registration failed');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      setRegistrationMessage('Failed to register. Please try again.');
+    } finally {
+      setRegistering(false);
+    }
+  };
+
+  const closeRegistrationModal = () => {
+    setShowRegistrationModal(false);
+    setSelectedEventForRegistration(null);
+    setPhoneNumber('');
+    setRegistrationMessage('');
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 font-inter text-[#2C2C2C]">
       {/* Header Section */}
@@ -151,6 +220,12 @@ const UserDashboard = () => {
           Event <span className="text-[#8A2BE2]">Hive</span>
         </div>
         <nav className="flex items-center space-x-4">
+          <button 
+            onClick={() => window.location.href = '/user/registered-events'}
+            className="text-[#2C2C2C] font-semibold hover:text-[#8A2BE2] transition-all duration-200"
+          >
+            Registered Events
+          </button>
           <span className="text-gray-700 font-medium">Welcome, {user?.name}</span>
           <button 
             onClick={handleLogout}
@@ -313,7 +388,10 @@ const UserDashboard = () => {
                             <p className="text-sm text-gray-600 mb-4 truncate">{location}</p>
                             <div className="flex justify-between items-center">
                               <span className="text-lg font-bold text-[#8A2BE2]">{cost}</span>
-                              <button className="rounded-[8px] border border-[#8A2BE2] bg-[#8A2BE2] text-white py-2 px-5 shadow-md hover:bg-[#7a1bd1] transition-all duration-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:ring-opacity-75">
+                              <button 
+                                onClick={() => handleEventRegistration(event)}
+                                className="rounded-[8px] border border-[#8A2BE2] bg-[#8A2BE2] text-white py-2 px-5 shadow-md hover:bg-[#7a1bd1] transition-all duration-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:ring-opacity-75"
+                              >
                                 {event.type && event.type.toUpperCase() === 'FREE' ? 'Register Now' : 'Book Now'}
                               </button>
                             </div>
@@ -344,6 +422,97 @@ const UserDashboard = () => {
                 )}
         </div>
       </section>
+
+      {/* Registration Modal */}
+      {showRegistrationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="bg-gradient-to-r from-[#8A2BE2] to-[#6B47DC] text-white p-6 rounded-t-2xl">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-bold">Register for Event</h2>
+                  <p className="text-purple-100 text-sm mt-1">{selectedEventForRegistration?.title}</p>
+                </div>
+                <button
+                  onClick={closeRegistrationModal}
+                  className="text-white hover:text-gray-200 transition-colors duration-200"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              <div className="mb-4">
+                <p className="text-gray-700 mb-2">
+                  <strong>Event:</strong> {selectedEventForRegistration?.title}
+                </p>
+                <p className="text-gray-700 mb-2">
+                  <strong>Type:</strong> {selectedEventForRegistration?.type}
+                </p>
+                <p className="text-gray-700 mb-4">
+                  <strong>Cost:</strong> {selectedEventForRegistration?.type === 'FREE' ? 'FREE' : `₹${selectedEventForRegistration?.cost}`}
+                </p>
+              </div>
+
+              <div className="mb-4">
+                <label htmlFor="phone" className="block text-gray-700 font-semibold mb-2">
+                  Phone Number *
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="Enter your phone number"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent"
+                  required
+                />
+              </div>
+
+              {selectedEventForRegistration?.type === 'PAID' && (
+                <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-blue-800 font-semibold mb-2">Payment Information</p>
+                  <p className="text-blue-700 text-sm">
+                    After registration, you will receive payment instructions via GPay to complete your booking.
+                  </p>
+                  <p className="text-blue-700 text-sm mt-1">
+                    <strong>Amount:</strong> ₹{selectedEventForRegistration?.cost}
+                  </p>
+                </div>
+              )}
+
+              {registrationMessage && (
+                <div className={`mb-4 p-3 rounded-lg ${
+                  registrationMessage.includes('Successfully') 
+                    ? 'bg-green-100 text-green-800 border border-green-200' 
+                    : 'bg-red-100 text-red-800 border border-red-200'
+                }`}>
+                  {registrationMessage}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={closeRegistrationModal}
+                  className="flex-1 py-3 px-4 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRegistrationSubmit}
+                  disabled={registering || !phoneNumber.trim()}
+                  className="flex-1 py-3 px-4 bg-[#8A2BE2] text-white rounded-lg hover:bg-[#7a1bd1] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {registering ? 'Registering...' : 'Register'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <Footer />

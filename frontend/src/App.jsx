@@ -8,6 +8,7 @@ import AdminSignup from './pages/admin/signup';
 import UserLogin from './pages/user/userlogin';
 import UserSignup from './pages/user/usersignup';
 import UserDashboard from './pages/user/userdashboard';
+import RegisteredEvents from './pages/user/registeredevents';
 import AdminDashboard from './pages/admin/admindashboard';
 import Home from './pages/landing';
 import Landing from './pages/landing';
@@ -44,6 +45,9 @@ const AppRoutes = () => {
 
             {/* User Dashboard (protected) */}
             <Route path="/user/dashboard" element={<UserDashboard />} />
+
+            {/* User Registered Events (protected) */}
+            <Route path="/user/registered-events" element={<RegisteredEvents />} />
 
             {/* Create Event (protected) */}
             <Route path="/admin/create-event" element={<CreateEvent />} />

@@ -12,6 +12,7 @@ const CreateEvent = () => {
   const [endDate, setEndDate] = useState('');
   const [eventCost, setEventCost] = useState('');
   const [eventType, setEventType] = useState('FREE');
+  const [eventCategory, setEventCategory] = useState('');
   const [eventImage, setEventImage] = useState(null);
   const [eventDescription, setEventDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -22,6 +23,7 @@ const CreateEvent = () => {
   const [startDateError, setStartDateError] = useState('');
   const [endDateError, setEndDateError] = useState('');
   const [eventCostError, setEventCostError] = useState('');
+  const [eventCategoryError, setEventCategoryError] = useState('');
   const [eventDescriptionError, setEventDescriptionError] = useState('');
   const [eventImageError, setEventImageError] = useState('');
   const [formMessage, setFormMessage] = useState('');
@@ -96,6 +98,7 @@ const CreateEvent = () => {
     setStartDateError('');
     setEndDateError('');
     setEventCostError('');
+    setEventCategoryError('');
     setEventDescriptionError('');
     setEventImageError('');
     setFormMessage('');
@@ -136,6 +139,10 @@ const CreateEvent = () => {
       // FREE event, cost is not required and not sent
       setEventCost('');
       setEventCostError('');
+    }
+    if (!eventCategory.trim()) {
+      setEventCategoryError('Event category is required.');
+      isValid = false;
     }
     if (!eventDescription.trim()) {
       setEventDescriptionError('Event description is required.');
@@ -190,6 +197,7 @@ const CreateEvent = () => {
         eventDescription: eventDescription.trim(),
         eventImage,
         type: eventType,
+        category: eventCategory,
       };
       if (eventType === 'PAID') {
         eventData.eventCost = parseFloat(eventCost);
@@ -218,6 +226,7 @@ const CreateEvent = () => {
         setEventImage(null);
         setEventDescription('');
         setEventType('FREE');
+        setEventCategory('');
         setTimeout(() => {
           navigate('/admin/dashboard');
         }, 1200);
@@ -400,6 +409,32 @@ const CreateEvent = () => {
               required
             />
             {eventCostError && <p className="text-red-500 text-sm mt-1 font-semibold">{eventCostError}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="event-category" className="block text-gray-700 text-base font-bold mb-2">Event Category</label>
+            <select
+              id="event-category"
+              className={`w-full p-4 border ${eventCategoryError ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] text-gray-800 font-semibold text-lg`}
+              value={eventCategory}
+              onChange={(e) => { setEventCategory(e.target.value); setEventCategoryError(''); }}
+              required
+            >
+              <option value="">Select a category</option>
+              <option value="business">Business & Professional</option>
+              <option value="technology">Technology</option>
+              <option value="education">Education & Learning</option>
+              <option value="health">Health & Wellness</option>
+              <option value="entertainment">Entertainment</option>
+              <option value="sports">Sports & Fitness</option>
+              <option value="arts">Arts & Culture</option>
+              <option value="networking">Networking</option>
+              <option value="food">Food & Drink</option>
+              <option value="travel">Travel & Tourism</option>
+              <option value="charity">Charity & Non-profit</option>
+              <option value="other">Other</option>
+            </select>
+            {eventCategoryError && <p className="text-red-500 text-sm mt-1 font-semibold">{eventCategoryError}</p>}
           </div>
 
           <div>

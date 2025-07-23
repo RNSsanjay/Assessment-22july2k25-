@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
             const token = localStorage.getItem('token');
 
             if (token) {
-                await axios.post('http://localhost:8000/api/auth/logout/', {}, {
+                await axios.post('http://127.0.0.1:8000/api/auth/logout/', {}, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',

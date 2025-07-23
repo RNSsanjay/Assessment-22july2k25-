@@ -59,6 +59,7 @@ def create_event(request):
         event_description = data.get('eventDescription', '').strip()
         event_image = data.get('eventImage', '')  # Base64 encoded image
         event_type = data.get('type', 'FREE').upper()
+        event_category = data.get('category', '').strip()
 
         # Validation
         if not event_title:
@@ -78,6 +79,8 @@ def create_event(request):
                 return Response({'error': 'Event cost is required for paid events'}, status=status.HTTP_400_BAD_REQUEST)
         if not event_description:
             return Response({'error': 'Event description is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not event_category:
+            return Response({'error': 'Event category is required'}, status=status.HTTP_400_BAD_REQUEST)
         if not event_image:
             return Response({'error': 'Event image is required'}, status=status.HTTP_400_BAD_REQUEST)
         if not event_image.startswith('data:image'):
@@ -118,6 +121,7 @@ def create_event(request):
                 'description': event_description,
                 'image': event_image,  # Store base64 image
                 'type': event_type,
+                'category': event_category,
                 'admin_id': payload['admin_id'],
                 'admin_name': payload.get('name', ''),
                 'created_at': datetime.utcnow(),
