@@ -58,6 +58,8 @@ const AdminLogin = () => {
           localStorage.setItem('adminEmail', data.user.email);
           localStorage.setItem('adminId', data.user.id);
         }
+        // Set cookie for adminToken
+        document.cookie = `adminToken=${data.token}; path=/; SameSite=Strict;`;
         setTimeout(() => {
           navigate('/admin/dashboard');
         }, 1000);
@@ -150,39 +152,39 @@ const AdminLogin = () => {
         </div>
       </div>
 
-      
+
+      <div
+        className="relative w-full md:w-2/5 bg-cover bg-center p-8 flex items-center justify-center group cursor-pointer"
+        style={{
+          backgroundImage: "url('/src/assets/signin_img.svg')",
+          position: 'relative'
+        }}
+      >
+        {/* Blue overlay with opacity */}
         <div
-          className="relative w-full md:w-2/5 bg-cover bg-center p-8 flex items-center justify-center group cursor-pointer"
           style={{
-            backgroundImage: "url('/src/assets/signin_img.svg')",
-            position: 'relative'
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(52, 120, 246, 0.4)', // blue with opacity
+            zIndex: 1,
+            borderRadius: 'inherit'
           }}
-        >
-          {/* Blue overlay with opacity */}
-          <div
-            style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'rgba(52, 120, 246, 0.4)', // blue with opacity
-          zIndex: 1,
-          borderRadius: 'inherit'
+        />
+        <div className="relative z-10 text-white text-center px-4">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">Hello Friend</h2>
+          <p className="text-base md:text-lg mb-8 opacity-80">
+            To keep connected with us provide us with your information
+          </p>
+          <button
+            className="bg-white text-[#8A2BE2] font-semibold py-3 px-10 rounded-lg shadow-lg hover:bg-gray-100 transition-all duration-300 text-lg opacity-0 group-hover:opacity-100 pointer-events-auto"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate('/admin/signup');
             }}
-          />
-          <div className="relative z-10 text-white text-center px-4">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Hello Friend</h2>
-            <p className="text-base md:text-lg mb-8 opacity-80">
-          To keep connected with us provide us with your information
-            </p>
-            <button
-          className="bg-white text-[#8A2BE2] font-semibold py-3 px-10 rounded-lg shadow-lg hover:bg-gray-100 transition-all duration-300 text-lg opacity-0 group-hover:opacity-100 pointer-events-auto"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate('/admin/signup');
-          }}
-          type="button"
-            >
-          Sign up
-            
+            type="button"
+          >
+            Sign up
+
           </button>
         </div>
       </div>

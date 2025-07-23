@@ -22,11 +22,14 @@ MIN_PASSWORD_LENGTH = 8
 JWT_EXPIRATION_DELTA = timedelta(days=7)
 SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'your-secret-key-here')
 
+MONGODB_URI = os.getenv('MONGODB_URI')
+MONGODB_DATABASE = os.getenv('MONGODB_DATABASE')
+
 # MongoDB connection with error handling
 def get_mongo_client():
     try:
         client = MongoClient(
-            settings.MONGODB_URI,
+            MONGODB_URI,
             serverSelectionTimeoutMS=5000,
             connectTimeoutMS=10000,
             socketTimeoutMS=20000,
@@ -36,7 +39,7 @@ def get_mongo_client():
         )
         # Verify the connection
         client.admin.command('ping')
-        db = client[settings.MONGODB_DATABASE]
+        db = client[MONGODB_DATABASE]
         collection = db[settings.MONGODB_COLLECTION]
         return client, db, collection
     except PyMongoError as e:

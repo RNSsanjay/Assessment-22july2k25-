@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-vo%+ff1o2f&vs^%g*-$w5e&ag%u(k7^t)b68w0yc8&va7l4rbh'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -126,8 +130,8 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # MongoDB configuration
-MONGODB_URI = "mongodb+srv://1QoSRtE75wSEibZJ:1QoSRtE75wSEibZJ@cluster0.mregq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-MONGODB_DATABASE = "EventManagement"
+MONGODB_URI = os.getenv('MONGODB_URI')
+MONGODB_DATABASE = os.getenv('MONGODB_DATABASE')
 
 
 # REST Framework settings

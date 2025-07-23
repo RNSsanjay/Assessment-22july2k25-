@@ -96,7 +96,7 @@ const AdminDashboard = () => {
     setSelectedEvent(event);
     setShowParticipantsModal(true);
     setLoadingParticipants(true);
-    
+
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch(`http://127.0.0.1:8000/api/events/${event.id}/participants/`, {
@@ -104,7 +104,7 @@ const AdminDashboard = () => {
           'Authorization': `Bearer ${token}`,
         },
       });
-      
+
       const data = await response.json();
       if (response.ok) {
         setParticipants(data.participants || []);
@@ -200,39 +200,47 @@ const AdminDashboard = () => {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {events.map((event) => {
-                  const imgSrc = event.image && typeof event.image === 'string' && event.image.startsWith('data:image')
-                    ? event.image
-                    : event.image_url || 'https://placehold.co/400x250/2C2B6A/FFFFFF?text=Event';
-                  const title = event.title || 'Untitled Event';
-                  const date = event.date || '';
-                  const location = event.location || '';
-                  const cost = event.type && event.type.toUpperCase() === 'FREE' ? 'FREE' : `${event.cost || 0} INR`;
-                  const typeTagBgClass = event.type && event.type.toUpperCase() === 'FREE' ? 'bg-white text-[#8A2BE2] rounded-[8px]' : 'bg-white';
-                  return (
-                    <div 
-                      key={event.id} 
-                      className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300 cursor-pointer border border-[#8A2BE2]/20"
-                      onClick={() => handleEventClick(event)}
-                    >
-                      <div className="relative p-4">
-                        <img src={imgSrc} alt={title} className="w-full h-48 object-cover p-2 rounded-[8px] border border-[#8A2BE2]/20" />
-                        <span className={`absolute top-8 left-8 px-3 py-1 rounded-[8px] border border-[#8A2BE2] text-xs font-semibold text-[#8A2BE2] ${typeTagBgClass}`}>
-                          {event.type ? event.type.toUpperCase() : 'N/A'}
-                        </span>
-                      </div>
-                      <div className="p-5">
-                        <h4 className="text-xl font-semibold text-gray-800 mb-2 truncate">{title}</h4>
-                        <p className="text-sm text-[#8A2BE2] mb-1 font-medium">{date}</p>
-                        <p className="text-sm text-gray-600 mb-4 truncate">{location}</p>
-                        
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              {events.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                  <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-4.418 0-8-3.582-8-8s3.582-8 8-8 8 3.582 8 8-3.582 8-8 8z" />
+                  </svg>
+                  <p className="text-lg">No events found</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {events.map((event) => {
+                    const imgSrc = event.image && typeof event.image === 'string' && event.image.startsWith('data:image')
+                      ? event.image
+                      : event.image_url || 'https://placehold.co/400x250/2C2B6A/FFFFFF?text=Event';
+                    const title = event.title || 'Untitled Event';
+                    const date = event.date || '';
+                    const location = event.location || '';
+                    const cost = event.type && event.type.toUpperCase() === 'FREE' ? 'FREE' : `${event.cost || 0} INR`;
+                    const typeTagBgClass = event.type && event.type.toUpperCase() === 'FREE' ? 'bg-white text-[#8A2BE2] rounded-[8px]' : 'bg-white';
+                    return (
+                      <div
+                        key={event.id}
+                        className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300 cursor-pointer border border-[#8A2BE2]/20"
+                        onClick={() => handleEventClick(event)}
+                      >
+                        <div className="relative p-4">
+                          <img src={imgSrc} alt={title} className="w-full h-48 object-cover p-2 rounded-[8px] border border-[#8A2BE2]/20" />
+                          <span className={`absolute top-8 left-8 px-3 py-1 rounded-[8px] border border-[#8A2BE2] text-xs font-semibold text-[#8A2BE2] ${typeTagBgClass}`}>
+                            {event.type ? event.type.toUpperCase() : 'N/A'}
+                          </span>
+                        </div>
+                        <div className="p-5">
+                          <h4 className="text-xl font-semibold text-gray-800 mb-2 truncate">{title}</h4>
+                          <p className="text-sm text-[#8A2BE2] mb-1 font-medium">{date}</p>
+                          <p className="text-sm text-gray-600 mb-4 truncate">{location}</p>
 
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               {hasMore && (
                 <div className="text-center mt-12">
                   <button
@@ -254,7 +262,7 @@ const AdminDashboard = () => {
             </>
           )}
         </div>
-         
+
       </section>
 
       {/* Participants Modal */}
@@ -277,7 +285,7 @@ const AdminDashboard = () => {
                 </button>
               </div>
             </div>
-            
+
             <div className="p-6 overflow-y-auto max-h-[60vh]">
               {loadingParticipants ? (
                 <div className="flex justify-center items-center h-32">
@@ -297,7 +305,7 @@ const AdminDashboard = () => {
                       Total Participants: {participants.length}
                     </h3>
                   </div>
-                  
+
                   <div className="grid gap-4">
                     {participants.map((participant) => (
                       <div key={participant.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -313,13 +321,12 @@ const AdminDashboard = () => {
                             </p>
                           </div>
                           <div className="text-right">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              participant.payment_status === 'completed' 
-                                ? 'bg-green-100 text-green-800' 
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${participant.payment_status === 'completed'
+                                ? 'bg-green-100 text-green-800'
                                 : participant.payment_status === 'pending'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
                               {participant.payment_status}
                             </span>
                             {participant.payment_method && participant.payment_method !== 'none' && (
@@ -339,7 +346,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-       <Footer />
+      <Footer />
     </div>
   );
 };

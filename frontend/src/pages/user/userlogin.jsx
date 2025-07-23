@@ -57,6 +57,8 @@ const UserLogin = () => {
       if (response.ok) {
         setFormMessage('Sign in successful! Redirecting...');
         login(data.token, data.user);
+        // Set cookie for user token
+        document.cookie = `userToken=${data.token}; path=/; SameSite=Strict;`;
       } else {
         setFormMessage(data.error || 'Sign in failed. Please try again.');
       }

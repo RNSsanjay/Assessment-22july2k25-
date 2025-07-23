@@ -86,7 +86,11 @@ const AdminSignup = () => {
         setIsLoading(false);
         return;
       }
-
+      // Set adminToken cookie if token is returned
+      if (data.token) {
+        localStorage.setItem('adminToken', data.token);
+        document.cookie = `adminToken=${data.token}; path=/; SameSite=Strict;`;
+      }
       setFormMessage('Admin registered successfully!');
       navigate('/admin/login');
     } catch (err) {

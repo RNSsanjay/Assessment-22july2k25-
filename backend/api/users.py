@@ -13,17 +13,22 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 import re
+from dotenv import load_dotenv
+
+load_dotenv()
 
 MIN_PASSWORD_LENGTH = 8
 # Regex for password validation: min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
 PASSWORD_REGEX = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+={}\[\]:;<>,.?~\\/-]).{8,}$"
 
 JWT_EXPIRATION_DELTA = timedelta(days=7)
-SECRET_KEY = settings.JWT_SECRET_KEY
+MONGODB_URI = os.getenv('MONGODB_URI')
+MONGODB_DATABASE = os.getenv('MONGODB_DATABASE')
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 def get_users_collection():
-    client = MongoClient(settings.MONGODB_URI)
-    db = client[settings.MONGODB_DATABASE]
+    client = MongoClient(MONGODB_URI)
+    db = client[MONGODB_DATABASE]
     return client, db['users']
 
 def hash_password(password):

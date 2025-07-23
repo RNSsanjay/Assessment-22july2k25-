@@ -12,11 +12,14 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from bson import ObjectId
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Constants
-MONGODB_URI = "mongodb+srv://1QoSRtE75wSEibZJ:1QoSRtE75wSEibZJ@cluster0.mregq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-MONGODB_DATABASE = "EventManagement"
-SECRET_KEY = settings.JWT_SECRET_KEY
+MONGODB_URI = os.getenv('MONGODB_URI')
+MONGODB_DATABASE = os.getenv('MONGODB_DATABASE')
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 def get_events_collection():
     try:

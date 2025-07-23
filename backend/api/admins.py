@@ -12,15 +12,17 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 import re
+from dotenv import load_dotenv
 
+load_dotenv()
 
 # Constants
 MIN_PASSWORD_LENGTH = 8
 PASSWORD_REGEX = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+={}\[\]:;<>,.?~\\/-]).{8,}$"
-MONGODB_URI = "mongodb+srv://1QoSRtE75wSEibZJ:1QoSRtE75wSEibZJ@cluster0.mregq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-MONGODB_DATABASE = "EventManagement"
+MONGODB_URI = os.getenv('MONGODB_URI')
+MONGODB_DATABASE = os.getenv('MONGODB_DATABASE')
 JWT_EXPIRATION_DELTA = timedelta(days=7)
-SECRET_KEY = settings.JWT_SECRET_KEY
+SECRET_KEY = os.getenv('SECRET_KEY')
 PASSWORD_SALT = os.getenv('PASSWORD_SALT', 'default-salt-value')
 
 # Helper for events collection
