@@ -1,82 +1,46 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, User, Home } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { toast } from 'react-toastify';
+import React, { useState } from 'react';
 
 const Navbar = () => {
-    const navigate = useNavigate();
-    const { isAuthenticated, logout } = useAuth();
+  // State for search input (placeholder)
+  const [searchQuery, setSearchQuery] = useState('');
 
-    const handleLogout = async () => {
-        try {
-            await logout();
-            toast.success('Logged out successfully');
-            navigate('/');
-        } catch (error) {
-            console.error('Logout error:', error);
-            toast.error('Error during logout');
-        }
-    };
+  const handleSearch = (e) => {
+    e.preventDefault();
+    console.log('Searching for:', searchQuery);
+    // Implement your search logic here
+  };
 
-    return (
-        <nav className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
-                    {/* Logo */}
-                    <div className="flex items-center">
-                        <Link to="/" className="text-xl font-bold text-white hover:text-purple-400 transition-colors">
-                            MyApp
-                        </Link>
-                    </div>
+  return (
+    <nav className="bg-white shadow-sm py-4 px-6 md:px-12 flex flex-col md:flex-row justify-between items-center font-inter">
+      {/* Left Section: Logo */}
+      <div className="text-2xl font-bold text-[#1F1D4F] mb-4 md:mb-0">Event <span className="text-[#8A2BE2]">Hive</span></div>
 
-                    {/* Navigation Links */}
-                    <div className="flex items-center space-x-4">
-                        {isAuthenticated ? (
-                            <>
-                                <Link
-                                    to="/home"
-                                    className="flex items-center px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
-                                >
-                                    <Home className="w-4 h-4 mr-2" />
-                                    Home
-                                </Link>
-                                <Link
-                                    to="/profile"
-                                    className="flex items-center px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
-                                >
-                                    <User className="w-4 h-4 mr-2" />
-                                    Profile
-                                </Link>
-                                <button
-                                    onClick={handleLogout}
-                                    className="flex items-center px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600 rounded-md transition-colors"
-                                >
-                                    <LogOut className="w-4 h-4 mr-2" />
-                                    Logout
-                                </button>
-                            </>
-                        ) : (
-                            <>
-                                <Link
-                                    to="/login"
-                                    className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors"
-                                >
-                                    Login
-                                </Link>
-                                <Link
-                                    to="/signup"
-                                    className="px-4 py-2 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
-                                >
-                                    Sign Up
-                                </Link>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </nav>
-    );
-};
+      {/* Middle Section: Search Bar (appears centered on larger screens) */}
+      <form className="flex items-center w-full md:w-auto mb-4 md:mb-0" onSubmit={handleSearch}>
+        <input
+          type="text"
+          placeholder="Search events..."
+          className="p-2 pl-4 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] w-full md:w-64 text-gray-800"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <button
+          type="submit"
+          className="bg-[#8A2BE2] text-white p-2 rounded-r-lg hover:bg-[#7a1bd1] transition-all duration-300 flex items-center justify-center"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+      </form>
+
+      {/* Right Section: Login/Signup Buttons */}
+      <div className="flex items-center space-x-4">
+        <button className="text-gray-700 hover:text-[#8A2BE2] font-medium py-2 px-4 rounded-lg transition-colors duration-200">Login</button>
+        <button className="bg-[#8A2BE2] text-white py-2 px-6 rounded-lg shadow-md hover:bg-[#7a1bd1] transition-all duration-300">Signup</button>
+      </div>
+    </nav>
+  );
+}; 
 
 export default Navbar;

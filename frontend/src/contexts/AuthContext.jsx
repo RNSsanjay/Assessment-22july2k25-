@@ -44,6 +44,13 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         setIsAuthenticated(true);
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        // Navigate based on user type
+        if (userData.user_type === 'admin') {
+            window.location.href = '/admin/dashboard';
+        } else if (userData.user_type === 'user') {
+            window.location.href = '/user/dashboard';
+        }
     };
 
     const logout = async () => {
