@@ -236,7 +236,7 @@ const UserDashboard = () => {
 
       {/* Upcoming Events Section (Padding adjusted) */}
       <section className="pt-16 pb-12 px-6 md:px-12 bg-gray-100">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[1300px] mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
             <h3 className="text-4xl font-extrabold text-[#2C2C2C] mb-4 md:mb-0">Upcoming <span className="text-[#8A2BE2]">Events</span></h3>
             <div className="flex flex-wrap gap-4">
