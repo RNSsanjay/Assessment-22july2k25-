@@ -153,7 +153,7 @@ const AdminDashboard = () => {
 
       {/* Listed Events Section */}
       <section className="py-12 px-6 md:px-12 bg-gray-100">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[1380px] mx-auto">
           <h3 className="text-3xl font-extrabold text-[#2C2C2C] mb-8">Listed Events</h3>
 
           {loading ? (
@@ -170,22 +170,21 @@ const AdminDashboard = () => {
                   const title = event.title || 'Untitled Event';
                   const date = event.date || '';
                   const location = event.location || '';
+                  const cost = event.type && event.type.toUpperCase() === 'FREE' ? 'FREE' : `${event.cost || 0} INR`;
+                  const typeTagBgClass = event.type && event.type.toUpperCase() === 'FREE' ? 'bg-white text-[#8A2BE2] rounded-[8px]' : 'bg-white';
                   return (
-                    <div key={event.id} className="bg-[#F7F7F7] rounded-xl shadow-sm overflow-hidden transform hover:scale-105 transition-transform duration-300">
-                      <div className="relative">
-                        <img
-                          src={imgSrc}
-                          alt={title}
-                          className="w-full h-48 object-cover rounded-t-xl"
-                        />
-                        <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold bg-[#8A2BE2] text-white">
-                          {event.type}
+                    <div key={event.id} className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300 cursor-pointer border border-[#e0d7f7]">
+                      <div className="relative p-4">
+                        <img src={imgSrc} alt={title} className="w-full h-48 object-cover p-2 rounded-[8px] border border-[#8A2BE2]/20" />
+                        <span className={`absolute top-8 left-8 px-3 py-1 rounded-[8px] border border-[#8A2BE2] text-xs font-semibold text-[#8A2BE2] ${typeTagBgClass}`}>
+                          {event.type ? event.type.toUpperCase() : 'N/A'}
                         </span>
                       </div>
                       <div className="p-5">
-                        <h4 className="text-xl font-bold text-[#2C2C2C] mb-2 leading-tight">{title}</h4>
-                        <p className="text-sm text-[#8A2BE2] mb-1">{date}</p>
-                        <p className="text-sm text-gray-600 mb-4">{location}</p>
+                        <h4 className="text-xl font-semibold text-gray-800 mb-2 truncate">{title}</h4>
+                        <p className="text-sm text-[#8A2BE2] mb-1 font-medium">{date}</p>
+                        <p className="text-sm text-gray-600 mb-4 truncate">{location}</p>
+                        
                       </div>
                     </div>
                   );

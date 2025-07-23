@@ -25,25 +25,31 @@ const UserDashboard = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     const fetchEvents = async () => {
       setLoading(true);
       setError('');
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/events/?page=1&limit=50');
+        const response = await fetch(`http://127.0.0.1:8000/api/events/?page=1&limit=9`);
         const data = await response.json();
         if (response.ok && Array.isArray(data.events)) {
           setEvents(data.events);
           setFilteredEvents(data.events);
+          setHasMore(data.pagination ? data.pagination.has_more : false);
         } else {
           setEvents([]);
           setFilteredEvents([]);
+          setHasMore(false);
           setError(data.error || 'Failed to fetch events.');
         }
-      } catch (err) {
+      } catch {
         setEvents([]);
         setFilteredEvents([]);
+        setHasMore(false);
         setError('Could not connect to server.');
       } finally {
         setLoading(false);
@@ -51,6 +57,29 @@ const UserDashboard = () => {
     };
     fetchEvents();
   }, []);
+
+  // Load more events
+  const handleLoadMore = async () => {
+    if (!hasMore || loadingMore) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/events/?page=${nextPage}&limit=9`);
+      const data = await response.json();
+      if (response.ok && Array.isArray(data.events)) {
+        setEvents(prev => [...prev, ...data.events]);
+        setFilteredEvents(prev => [...prev, ...data.events]);
+        setPage(nextPage);
+        setHasMore(data.pagination ? data.pagination.has_more : false);
+      } else {
+        setHasMore(false);
+      }
+    } catch {
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // Filter logic for both filter bars
   const handleFilter = () => {
@@ -71,7 +100,7 @@ const UserDashboard = () => {
         try {
           const eventDate = new Date(ev.date).toISOString().split('T')[0];
           return eventDate === dateTime;
-        } catch (e) {
+        } catch  {
           return false;
         }
       });
@@ -251,50 +280,68 @@ const UserDashboard = () => {
 
           {/* Events Grid or Loader/Error/No Events */}
           {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#6B47DC]"></div>
-            </div>
-          ) : error ? (
-            <div className="text-center text-red-600 font-bold text-xl py-12">{error}</div>
-          ) : filteredEvents.length === 0 ? (
-            <div className="text-center text-gray-500 font-bold text-xl py-12">No events found matching your criteria.</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredEvents.map((event) => {
-                const imgSrc = event.image && typeof event.image === 'string' && event.image.startsWith('data:image')
-                  ? event.image
-                  : event.image || 'https://placehold.co/400x250/2C2B6A/FFFFFF?text=Event';
-                const title = event.title || 'Untitled Event';
-                const date = event.date || '';
-                const location = event.location || '';
-                const cost = event.type && event.type.toUpperCase() === 'FREE' ? 'FREE' : `${event.cost || 0} INR`;
-                
-                const typeTagBgClass = event.type && event.type.toUpperCase() === 'FREE' ? 'bg-green-500' : 'bg-yellow-500';
-
-                return (
-                  <div key={event.id} className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300 cursor-pointer">
-                    <div className="relative">
-                      <img src={imgSrc} alt={title} className="w-full h-48 object-cover" />
-                      <span className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold text-white ${typeTagBgClass}`}>
-                        {event.type ? event.type.toUpperCase() : 'N/A'}
-                      </span>
-                    </div>
-                    <div className="p-5">
-                      <h4 className="text-xl font-semibold text-gray-800 mb-2 truncate">{title}</h4>
-                      <p className="text-sm text-[#8A2BE2] mb-1 font-medium">{date}</p>
-                      <p className="text-sm text-gray-600 mb-4 truncate">{location}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold text-[#8A2BE2]">{cost}</span>
-                        <button className="bg-[#8A2BE2] text-white py-2 px-5 rounded-lg shadow-md hover:bg-[#7a1bd1] transition-all duration-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:ring-opacity-75">
-                          {event.type && event.type.toUpperCase() === 'FREE' ? 'Register Now' : 'Book Now'}
-                        </button>
-                      </div>
-                    </div>
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#6B47DC]"></div>
+                </div>
+                ) : error ? (
+                <div className="text-center text-red-600 font-bold text-xl py-12">{error}</div>
+                ) : filteredEvents.length === 0 ? (
+                <div className="text-center text-gray-500 font-bold text-xl py-12">No events found matching your criteria.</div>
+                ) : (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {filteredEvents.map((event) => {
+                      const imgSrc = event.image && typeof event.image === 'string' && event.image.startsWith('data:image')
+                        ? event.image
+                        : event.image || 'https://placehold.co/400x250/2C2B6A/FFFFFF?text=Event';
+                      const title = event.title || 'Untitled Event';
+                      const date = event.date || '';
+                      const location = event.location || '';
+                      const cost = event.type && event.type.toUpperCase() === 'FREE' ? 'FREE' : `${event.cost || 0} INR`;
+                      const typeTagBgClass = event.type && event.type.toUpperCase() === 'FREE' ? 'bg-white text-[#8A2BE2] rounded-[8px]' : 'bg-white';
+                      return (
+                        <div key={event.id} className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300 cursor-pointer border border-[#e0d7f7]">
+                          <div className="relative p-4">
+                            <img src={imgSrc} alt={title} className="w-full h-48 object-cover p-2 rounded-[8px] border border-[#8A2BE2]/20" />
+                            <span className={`absolute top-8 left-8 px-3 py-1 rounded-[8px] border border-[#8A2BE2] text-xs font-semibold text-[#8A2BE2] ${typeTagBgClass}`}>
+                              {event.type ? event.type.toUpperCase() : 'N/A'}
+                            </span>
+                          </div>
+                          <div className="p-5">
+                            <h4 className="text-xl font-semibold text-gray-800 mb-2 truncate">{title}</h4>
+                            <p className="text-sm text-[#8A2BE2] mb-1 font-medium">{date}</p>
+                            <p className="text-sm text-gray-600 mb-4 truncate">{location}</p>
+                            <div className="flex justify-between items-center">
+                              <span className="text-lg font-bold text-[#8A2BE2]">{cost}</span>
+                              <button className="rounded-[8px] border border-[#8A2BE2] bg-[#8A2BE2] text-white py-2 px-5 shadow-md hover:bg-[#7a1bd1] transition-all duration-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:ring-opacity-75">
+                                {event.type && event.type.toUpperCase() === 'FREE' ? 'Register Now' : 'Book Now'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
-          )}
+                  {hasMore && (
+                    <div className="flex justify-center mt-12">
+                      <button
+                        onClick={handleLoadMore}
+                        disabled={loadingMore}
+                        className="bg-[#8A2BE2] text-white font-bold py-3 px-10 rounded-lg shadow-md hover:bg-[#7a1bd1] transition-all duration-300 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {loadingMore ? (
+                          <span className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Loading...
+                          </span>
+                        ) : (
+                          'Load more...'
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </>
+                )}
         </div>
       </section>
 
